@@ -1,36 +1,82 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"time"
+	"html/template"
+	"log"
+	"net/http"
 )
 
-func handle(c context.Context, duration time.Duration) {
-	select {
-	case <-c.Done():
-		fmt.Println("handle", c.Err()) //返回结束的原因
-	case <-time.After(duration):
-		/*
-			是本次监听动作的超时时间
-			意思就说，只有在本次select 操作中会有效
-			再次select 又会重新开始计时，
-		*/
-		fmt.Println("process request with", duration) //持续时间
+func sayHelloName(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm() // 解析URL传递的参数，对于post则解析响应包的主题（request body）
+	// 注意 ：如果没有调用parseForm方法，则下面无法获取表单的数据
+	fmt.Println("r.Form:", r.Form)
+	fmt.Println("path:", r.URL.Path)
+	fmt.Println("scheme:", r.URL.Scheme)
+	fmt.Println("url_log:", r.Form["url_long"])
+	for k, v := range r.Form {
+		fmt.Println("key:value", k, ":", v)
+	}
+	fmt.Fprintf(w, "hello golang!")
+}
+
+// 新增表单
+func login(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("method:", r.Method) //获取请求的方法
+	if r.Method == "GET" {
+		t, _ := template.ParseFiles("login.gtpl")
+		log.Println(t.Execute(w, nil))
+	} else {
+		//请求的是登录数据，那么执行登录的逻辑判断
+		// 必须显示的调用一下 r.ParseForm()
+		r.ParseForm()
+
+		if len(r.Form["username"][0]) == 0 || len(r.Form["password"][0]) == 0 {
+			println("用户名或密码未输入")
+			return
+		}
+
+		fmt.Println("username:", r.Form["username"])
+		fmt.Println("password:", r.Form["password"])
+	}
+
+	//// 下拉菜单
+	//s := []string{"apple", "pear", "banana"}
+	//v := r.Form.Get("fruit")
+	//for _, item := range s {
+	//	if item == v {
+	//		fmt.Println("下拉菜单的元素存在", v)
+	//		return
+	//	}
+	//}
+	//println("下拉菜单的元素不存在：", v)
+
+	// 单选按钮
+	s1 := []string{"1", "2"}
+	dxV := r.Form.Get("gender")
+	for _, v := range s1 {
+		if v == dxV {
+			fmt.Println("单选的按钮值为：", v)
+		}
+	}
+	//println("单选的按钮不存在：", dxV)
+
+}
+
+func upload(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("请求的方法method:", r.Method)
+	if r.Method == "GET" {
+
 	}
 }
 
 func main() {
-	// 创建一个过期时间为1s的上下文
-	// context.WithTimeout 返回一个context结构体和一个取消的函数
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel() //关闭
-
-	//并向上下文传入handle函数，该方法会使用500ms时间处理传入的请求
-	go handle(ctx, 1500*time.Millisecond)
-	select {
-	case <-ctx.Done():
-		fmt.Println("main", ctx.Err())
+	http.HandleFunc("/", sayHelloName) // 路由
+	http.HandleFunc("/login", login)
+	http.HandleFunc("upload", upload)
+	err := http.ListenAndServe(":9999", nil)
+	if err != nil {
+		fmt.Println("listen failed ,err:", err)
+		return
 	}
-
 }
