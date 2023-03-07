@@ -1,0 +1,19 @@
+{{define "./static/index.html"}}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Single file upload example</title>
+</head>
+<body>
+<form action="/singleFileUpload" method="post" enctype="multipart/form-data">
+    <label>
+        名字 :<input type="text" name="name"><br>
+        邮箱:<input type="email" name="email"><br>
+        文件:<input type="file" name="file"><br>
+        <input type="submit" value="上传">
+    </label>
+</form>
+</body>
+</html>
+{{end}}
