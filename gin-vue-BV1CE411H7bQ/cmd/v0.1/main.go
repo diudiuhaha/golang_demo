@@ -59,6 +59,9 @@ func main() {
 		// 手机号是否在数据库中存在
 		if isTelephone(db, telephone) {
 			log.Println("[err] 手机号已经存在")
+			c.JSON(200, gin.H{
+				"message": "手机号已存在",
+			})
 			return
 		}
 
