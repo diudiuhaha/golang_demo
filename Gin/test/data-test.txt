@@ -1,1 +1,0 @@
-message=this_is_message&nick=1
